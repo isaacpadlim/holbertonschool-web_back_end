@@ -5,20 +5,23 @@ from pymongo import MongoClient
 
 
 if __name__ == "__main__":
-    client = MongoClient()
+    client = MongoClient('mongodb://127.0.0.1:27017')
     col = client.logs.nginx
 
     print("{} logs".format(col.count_documents({})))
     print("Methods:")
     for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
         print("\tmethod {}: {}".format(method, col.count_documents({"method": method})))
-    print("{} status check".format(col.count_documents({"method": "GET", "path": "/status"})))
+
+    print("{} status check".format(
+        col.count_documents({"method": "GET", "path": "/status"})
+    ))
 
     print("IPs:")
     pipeline = [
         {"$group": {"_id": "$ip", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1, "_id": 1}},
+        {"$sort": {"count": -1}},
         {"$limit": 10}
     ]
     for doc in col.aggregate(pipeline):
-        print("\t{}: {}".format(doc.get("_id"), doc.get("count")))
+        print("\t{}: {}".format(doc["_id"], doc["count"]))
